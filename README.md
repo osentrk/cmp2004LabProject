@@ -24,7 +24,9 @@ teacher
     
     )
     - Toolbox'tan ilgili nesne seçildiğinde ona ait fonksiyonların çalıştırılması
+    - Bir nesne çizildiğinde ekranda kaç tane o nesneden bulunduğunun bilgisinin tutulması.
     - servera join olan clientların bilgisini dosyanın bulunduğu konuma kaydet (IP, ad - soyad, katılma saati)
+    - öğrenci derse katıldığı sürece katılım süresi sayılacak
     - eğer serverdan exit olma vakti alınabiliyorsa çıkış logunu kaydet
     - birden fazla öğrenci derse katılabilir.
     - öğrenciler ve hoca chatbox ile birbiriyle konuşabilir
