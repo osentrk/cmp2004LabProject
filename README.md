@@ -2,4 +2,5 @@
 BAU - CMP2004
 
 YAPILACAKLAR LİSTESİ
-  -
+  - xxxx
+  - yyyyy
