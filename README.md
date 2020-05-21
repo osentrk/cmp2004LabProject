@@ -19,6 +19,14 @@ teacher
     - sağ ortada attandence, 
     - sağ üstte ders logosu.. 
     - Öğrenci el kaldırdığında sağ ortada bulunan katılımcı listesinde bulunan simgenin rengi değişecek. Eş zamanlı olarak           Teacher'a Messagebox ile bildirim.
-    - sol ortada whiteboard)
+    - sol ortada whiteboard
+    - üst bara ders başlatma butonu ekle --> timer ileriye doğru akacak 60. dakikada ders süresi bitti mesajı hocaya gösterilsin.
     
+    )
+    - Toolbox'tan ilgili nesne seçildiğinde ona ait fonksiyonların çalıştırılması
+    - servera join olan clientların bilgisini dosyanın bulunduğu konuma kaydet (IP, ad - soyad, katılma saati)
+    - eğer serverdan exit olma vakti alınabiliyorsa çıkış logunu kaydet
+    - birden fazla öğrenci derse katılabilir.
+    - öğrenciler ve hoca chatbox ile birbiriyle konuşabilir
+    - silgi (beyaz renkli fırça)
 
