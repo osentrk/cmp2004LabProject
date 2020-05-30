@@ -37,6 +37,8 @@ public class Teacher extends JComponent {
 	
 	public int operationCode;
 	
+	private int curStroke;
+	
 	
 	/* tahta deneme */
 	
@@ -155,7 +157,7 @@ public class Teacher extends JComponent {
 				if(graph != null) {
 					graph.drawLine(prevX, prevY, curX, curY);
 					try {
-						tc.sendCoordinate(prevX, prevY, curX, curY, 1, tc.getColor(), tc.getThickness());
+						tc.sendCoordinate(prevX, prevY, curX, curY, 1, tc.getColor(),tc.getThickness());
 					}catch (Exception x) {
 						x.printStackTrace();
 					}
@@ -183,7 +185,7 @@ public class Teacher extends JComponent {
 	}
 	
 	public void clear() {
-		this.setThickness(new BasicStroke(10));
+		this.setThickness(10);
 		graph.setPaint(Color.white);
 		System.out.println("Board.clear() function is called.");
 	}
@@ -200,21 +202,17 @@ public class Teacher extends JComponent {
 		this.setColor(curColor);
 		System.out.println("Board.draw() function is called.");
 	}
-	BasicStroke strokes;
+	
 	public void rectangle() throws Exception {
-		strokes = ( BasicStroke ) graph.getStroke();
-		System.out.println("kkkkk:" + strokes);
-		/*this.setColor(curColor);
+		this.setColor(curColor);
 		graph.drawRect(prevX, prevY, 80, 80);
-		repaint();*/
+		repaint();
 	}
 	
 	public void circle() {
-		tc.setThickness(strokes);
-		//b();
-		/*this.setColor(curColor);
+		this.setColor(curColor);
 		graph.drawOval(prevX, prevY, 80, 80);
-		repaint();*/
+		repaint();
 	}
 	
 	public void setColor(Color c) {
@@ -223,14 +221,14 @@ public class Teacher extends JComponent {
 		System.out.println("Graph color set to: " + c);
 	}
 	
-	public void setThickness(BasicStroke b) {
-		graph.setStroke(b);
+	public void setThickness(int stroke) {
+		graph.setStroke(new BasicStroke(stroke));
+		curStroke = stroke;
+		System.out.println("Line width is set to "+stroke);
 	}
 	
-	public BasicStroke getThickness() {
-		BasicStroke stroke;
-		stroke = (BasicStroke) graph.getStroke();
-		return stroke;
+	public int getThickness() {
+		return curStroke;
 	}
 
 	ActionListener aListener = new ActionListener() {
@@ -238,7 +236,7 @@ public class Teacher extends JComponent {
 			if(e.getSource() == deleteBtn) {
 				tc.clear();
 			}else if(e.getSource() == drawBtn) {
-				tc.setThickness(new BasicStroke(1));
+				tc.setThickness(1);
 				tc.draw();
 			}else if(e.getSource() == rectangleBtn) {
 				try {
@@ -262,14 +260,11 @@ public class Teacher extends JComponent {
 	
 	
 	
-	public void showBoard() {
-				
+	public void showBoard() {	
 		JFrame jf = new JFrame("Teacher Side");
 		Container content = jf.getContentPane();
 		
 		content.setLayout(new BorderLayout());
-		//content.setBackground(Color.white);
-		//brd = new Board(); 
 		content.add(tc, BorderLayout.CENTER);
 		
 		JPanel control = new JPanel();
@@ -308,18 +303,15 @@ public class Teacher extends JComponent {
 		return curColor;
 	}
 	
-	public void sendCoordinate(int prevX, int prevY, int curX, int curY, int opCode, Color color, BasicStroke strokesssss) throws Exception {
-		System.out.println("okito");
-		System.out.println(strokesssss);
-		//retr
+	public void sendCoordinate(int prevX, int prevY, int curX, int curY, int opCode, Color color, int stroke) throws Exception {
 		try {
-			Coordinate c = new Coordinate(prevX, prevY, curX, curY, opCode, color, strokesssss);
+			Coordinate c = new Coordinate(prevX, prevY, curX, curY, opCode, color, stroke);
 			outStream.writeObject(c);
 			outStream.flush();
 			System.out.println("C is sent!");
 		} catch(Exception e) {
 			System.out.println("Teacher.sendCoordinate() error!"+e);
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 	

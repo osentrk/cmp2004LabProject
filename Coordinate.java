@@ -10,9 +10,9 @@ public class Coordinate implements Serializable {
 	public int curY;
 	public int opCode;
 	public Color color;
-	public BasicStroke stroke;
+	public int stroke;
 	
-	public Coordinate(int prevX, int prevY, int curX, int curY, int opCode, Color color, BasicStroke stroke) {
+	public Coordinate(int prevX, int prevY, int curX, int curY, int opCode, Color color, int stroke) {
 		this.prevX = prevX;
 		this.prevY = prevY;
 		this.curX = curX;
@@ -20,7 +20,6 @@ public class Coordinate implements Serializable {
 		this.opCode = opCode;
 		this.color = color;
 		this.stroke = stroke;
-		System.out.println("coorddddddin:" + stroke);
 	}
 	
 	public Coordinate(int prevX, int prevY, int curX, int curY, int opCode, Color color ) {
@@ -30,10 +29,6 @@ public class Coordinate implements Serializable {
 		this.curY = curY;
 		this.opCode = opCode;
 		this.color = color;
-		
-		
-
-		
 	}
 	
 	public Coordinate() {
@@ -43,6 +38,6 @@ public class Coordinate implements Serializable {
 		this.curY = -1;
 		this.opCode = -1;
 		this.color = Color.black;
-		this.stroke = new BasicStroke(1);
+		this.stroke = 1;
 	}
 }

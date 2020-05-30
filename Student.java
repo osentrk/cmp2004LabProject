@@ -96,13 +96,14 @@ public class Student {
 				if(recvPacket.opCode == 1) {
 					System.out.println("Drawing line");
 					brd.setColor(recvPacket.color);
-					brd.setThickness(recvPacket.stroke);
+					brd.setThickness(new BasicStroke(recvPacket.stroke));
 					brd.graph.drawLine(recvPacket.prevX, recvPacket.prevY, recvPacket.curX, recvPacket.curY);
 					brd.repaint();
 				}
 			}
 			catch (Exception e) {
 				System.out.println("recvPacket() error");
+				e.printStackTrace();
 			}
 		}while(recvPacket.opCode != -2);
 		
