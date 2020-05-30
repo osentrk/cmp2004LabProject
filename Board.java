@@ -8,18 +8,17 @@ import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.net.ServerSocket;
 import java.util.LinkedList;
 
-import javax.sound.sampled.Line;
 import javax.swing.JComponent;
 
 public class Board extends JComponent {
 	
-	Teacher tc;
 	Color curColor;
 	
-	private Graphics2D graph;
-	private Image img;
+	public Graphics2D graph;
+	public Image img;
 	
 	public int curX, curY, prevX, prevY; //store mouse position
 	
@@ -51,11 +50,10 @@ public class Board extends JComponent {
 				curY = e.getY();
 				if(graph != null) {
 					graph.drawLine(prevX, prevY, curX, curY);
-					tc.hýzýr(prevX,prevY,curX,curY,1);
+					
 					repaint();
 					prevX = curX; 
 					prevY = curY;	
-					//System.out.println("Graph is not null");
 				}
 				else {
 					System.out.println("over");
@@ -97,7 +95,7 @@ public class Board extends JComponent {
 		System.out.println("Board.draw() function is called.");
 	}
 	
-	public void rectangle() {
+	public void rectangle() throws Exception {
 		this.setColor(curColor);
 		graph.drawRect(prevX, prevY, 80, 80);
 		repaint();

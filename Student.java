@@ -1,3 +1,4 @@
+import java.awt.Stroke;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -16,10 +17,22 @@ import javax.swing.JPanel;
 
 public class Student {
 	
-	public static void main(String[] args) throws IOException {
-		System.out.println("stu");
-		new Student().showBoard();
-		connection();
+	public static final int PORT = 5353;
+	private String serverInfo;
+	private Socket studentSocket;
+	private ObjectOutputStream outStream;
+	private ObjectInputStream inStream;
+	private static Student st;
+	public static void main(String[] args) throws Exception, IOException, ClassNotFoundException {
+		System.out.println("Student side");
+		st = new Student("127.0.0.1");
+		
+		st.showBoard();
+		st.runStudent();		
+	}
+	
+	public Student(String ipAddress) {
+		serverInfo = ipAddress;
 	}
 	
 	JButton sendDataBtn;
@@ -28,13 +41,14 @@ public class Student {
 	ActionListener aListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() == sendDataBtn) {
-				System.out.println("send data");
-				//brd.clear();
+				try {
+					//st.sendCoordinate();
+				}catch (Exception x) {
+					System.out.println("student.sendCoordinate() in button listener errror!");
+				}
 			}
 		}
 	};
-
-	
 	
 	public void showBoard() {
 		JFrame jf = new JFrame("Student Side");
@@ -62,39 +76,75 @@ public class Student {
 		jf.setVisible(true);
 	}
 	
-	public static void connection() throws UnknownHostException, IOException {
-		Socket socket = null;
-		PrintWriter out = null;
-        BufferedReader in = null;
-        String deger;
-        try {
-             //* server 'a localhost ve 7755 portu üzerinden baþlantý saðlanýyor *//
-             socket = new Socket("localhost", 7755);
-        } catch (Exception e) {
-             System.out.println("Port Hatasý!");
-        }
-        
-      //* Server'a veri gönderimi için kullandýðýmýz PrintWriter nesnesi oluþturduk *//
-        out = new PrintWriter(socket.getOutputStream(), true);
-
-        //* Server'dan gelen verileri tutan BufferedReader nesnesi oluþturulur *//
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-        System.out.println("Server'a gönderilecek sayýsý giriniz:");
-
-        //* Gönderilecek sayýnýn giriþi yapýlýyor *//
-        BufferedReader data = new BufferedReader(new InputStreamReader(System.in));
-
-        while((deger = data.readLine()) != null) {
-             out.println(deger);
-             System.out.println("Server'dan gelen sonuç = " + in.readLine());
-             System.out.println("Server'a gönderilecek saysý giriniz");
-        }
-        out.close();
-        in.close();
-        data.close();
-        socket.close();
+	public void connectTeacher() throws Exception{
+		System.out.println("Connecting..");
+		studentSocket = new Socket(InetAddress.getByName(serverInfo), PORT);
 	}
 	
-
+	public void createStream() throws Exception{
+		outStream = new ObjectOutputStream(studentSocket.getOutputStream());
+		inStream = new ObjectInputStream(studentSocket.getInputStream());
+	}
+	
+	public Coordinate recvPacket() throws Exception {
+		Coordinate recvPacket;
+		recvPacket = new Coordinate();
+		
+		do {
+			try {
+				recvPacket = (Coordinate) inStream.readObject();
+				if(recvPacket.opCode == 1) {
+					System.out.println("Drawing line");
+					brd.setColor(recvPacket.color);
+					brd.setThickness(recvPacket.stroke);
+					brd.graph.drawLine(recvPacket.prevX, recvPacket.prevY, recvPacket.curX, recvPacket.curY);
+					brd.repaint();
+				}
+			}
+			catch (Exception e) {
+				System.out.println("recvPacket() error");
+			}
+		}while(recvPacket.opCode != -2);
+		
+		return recvPacket;
+	}
+	
+	public void stopServer() throws IOException{
+		try {
+			outStream.close();
+			inStream.close();
+			studentSocket.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void runStudent() throws Exception{
+		try {
+			connectTeacher();
+			createStream();
+			System.out.println(recvPacket());
+		}catch (EOFException e) {
+			System.out.println("\nClient Terminated Conn\n");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
+			stopServer();
+		}
+	}
+	
+	/*public void sendCoordinate() throws Exception {
+		try {
+			//Coordinate c = new Coordinate(3,4,17,15,2);
+			outStream.writeObject(c);
+			outStream.flush();
+			System.out.println("C is sent!");
+		} catch(Exception e) {
+			System.out.println("student.sendCoordinate() error!");
+		}
+	}*/
+		
 }
