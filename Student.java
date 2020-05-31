@@ -78,7 +78,12 @@ public class Student {
 	
 	public void connectTeacher() throws Exception{
 		System.out.println("Connecting..");
-		studentSocket = new Socket(InetAddress.getByName(serverInfo), PORT);
+		try {
+			studentSocket = new Socket(InetAddress.getByName(serverInfo), PORT);
+		}catch (Exception e) {
+			System.out.println("Student cannot connect to Teacher.");
+		}
+		
 	}
 	
 	public void createStream() throws Exception{
@@ -93,12 +98,32 @@ public class Student {
 		do {
 			try {
 				recvPacket = (Coordinate) inStream.readObject();
-				if(recvPacket.opCode == 1) {
+				if(recvPacket.opCode == 1) { //drawing - erasing mode
 					System.out.println("Drawing line");
 					brd.setColor(recvPacket.color);
 					brd.setThickness(new BasicStroke(recvPacket.stroke));
 					brd.graph.drawLine(recvPacket.prevX, recvPacket.prevY, recvPacket.curX, recvPacket.curY);
 					brd.repaint();
+				} else if(recvPacket.opCode == 2) {
+					System.out.println("Erasing line");
+					brd.graph.setPaint(Color.white);
+					//brd.setColor(recvPacket.color);
+					brd.setThickness(new BasicStroke(recvPacket.stroke));
+					brd.graph.drawLine(recvPacket.prevX, recvPacket.prevY, recvPacket.curX, recvPacket.curY);
+					brd.repaint();
+				}
+				else if(recvPacket.opCode == 3) {
+					brd.setColor(recvPacket.color);
+					brd.setThickness(new BasicStroke(recvPacket.stroke));
+					brd.graph.drawRect(recvPacket.prevX, recvPacket.prevY, 80, 80);
+					brd.repaint();
+				}else if(recvPacket.opCode == 4) {
+					brd.setColor(recvPacket.color);
+					brd.setThickness(new BasicStroke(recvPacket.stroke));
+					brd.graph.drawOval(recvPacket.prevX, recvPacket.prevY, 80, 80);
+					brd.repaint();
+				}else if(recvPacket.opCode == 6) {
+					brd.clearAll();
 				}
 			}
 			catch (Exception e) {

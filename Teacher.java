@@ -40,11 +40,6 @@ public class Teacher extends JComponent {
 	private int curStroke;
 	
 	
-	/* tahta deneme */
-	
-	
-	
-	
 	public static final int PORT = 5353;
 	private ServerSocket serverSocket;
 	private Socket teacherSocket;
@@ -75,7 +70,7 @@ public class Teacher extends JComponent {
 				System.out.println(recvPacket.opCode);
 			}
 			catch (Exception e) {
-				System.out.println("recvPacket() error"); //TODO: kontrol, sonsuz döngüye giriyor
+				System.out.println("recvPacket() error"); //TODO: kontrol, sonsuz dï¿½ngï¿½ye giriyor
 			}
 		}while(recvPacket.opCode != -2);
 		
@@ -118,7 +113,6 @@ public class Teacher extends JComponent {
 	}
 	
 	JButton deleteBtn, drawBtn, rectangleBtn, circleBtn, colorBtn,clearBtn;
-	//Board brd;
 	
 	private static Teacher tc;
 	
@@ -126,8 +120,6 @@ public class Teacher extends JComponent {
 		tc = new Teacher();
 		tc.showBoard();
 		tc.runServer();
-		
-		/* tahta deneme */
 	}
 	
 	public Teacher() {
@@ -138,17 +130,9 @@ public class Teacher extends JComponent {
 				prevX = e.getX();
 				prevY = e.getY();
 				System.out.println("Coordinate when mouse clicked X: " + prevX + " Y: " + prevY);
-			}
-					
+			}		
 		});
 		
-		addMouseListener(new MouseAdapter() {
-			public void mouseReleased(MouseEvent e) { // get mouse position(x,y) when mouse pressed
-				System.out.println("Mouse released");
-				System.out.println(graph);
-			}
-					
-		});
 		
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e) {
@@ -157,16 +141,14 @@ public class Teacher extends JComponent {
 				if(graph != null) {
 					graph.drawLine(prevX, prevY, curX, curY);
 					try {
-						tc.sendCoordinate(prevX, prevY, curX, curY, 1, tc.getColor(),tc.getThickness());
+						tc.sendCoordinate(prevX, prevY, curX, curY, operationCode, tc.getColor(),tc.getThickness());
+						System.out.println(operationCode);
 					}catch (Exception x) {
 						x.printStackTrace();
 					}
 					repaint();
 					prevX = curX; 
 					prevY = curY;	
-				}
-				else {
-					System.out.println("over");
 				}
 				System.out.println("X: " + curX + " Y: " + curY);
 			}
@@ -181,12 +163,12 @@ public class Teacher extends JComponent {
 			clearAll();
 		}
 		grp.drawImage(img, 0, 0, null);
-		System.out.println("drawed");
 	}
 	
 	public void clear() {
 		this.setThickness(10);
 		graph.setPaint(Color.white);
+		operationCode = 2;
 		System.out.println("Board.clear() function is called.");
 	}
 	
@@ -194,24 +176,40 @@ public class Teacher extends JComponent {
 		graph.setPaint(Color.white);
 		graph.fillRect(0,0,getSize().width, getSize().height);
 		graph.setPaint(curColor);
+		try {
+			tc.sendCoordinate(prevX, prevY, curX, curY, 6, tc.getColor(),tc.getThickness());
+		}catch (Exception x) {
+			x.printStackTrace();
+		}
 		repaint();
 		System.out.println("Board.clearAll() function is called.");
 	}
 	
 	public void draw() {
 		this.setColor(curColor);
+		operationCode = 1;
 		System.out.println("Board.draw() function is called.");
 	}
 	
 	public void rectangle() throws Exception {
 		this.setColor(curColor);
 		graph.drawRect(prevX, prevY, 80, 80);
+		try {
+			tc.sendCoordinate(prevX, prevY, curX, curY, 3, tc.getColor(),tc.getThickness());
+		}catch (Exception x) {
+			x.printStackTrace();
+		}
 		repaint();
 	}
 	
 	public void circle() {
 		this.setColor(curColor);
 		graph.drawOval(prevX, prevY, 80, 80);
+		try {
+			tc.sendCoordinate(prevX, prevY, curX, curY, 4, tc.getColor(),tc.getThickness());
+		}catch (Exception x) {
+			x.printStackTrace();
+		}
 		repaint();
 	}
 	
