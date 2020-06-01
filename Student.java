@@ -13,6 +13,7 @@ import java.net.*;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class Student {
@@ -21,28 +22,32 @@ public class Student {
 	private String serverInfo;
 	private Socket studentSocket;
 	private ObjectOutputStream outStream;
-	private ObjectInputStream inStream;
+	private ObjectInputStream inStream;	
+	
+	JButton sendDataBtn;
+	Board brd;
 	private static Student st;
+	
 	public static void main(String[] args) throws Exception, IOException, ClassNotFoundException {
 		System.out.println("Student side");
-		st = new Student("127.0.0.1");
 		
+		st = new Student("127.0.0.1");
 		st.showBoard();
 		st.runStudent();		
 	}
 	
+		
 	public Student(String ipAddress) {
 		serverInfo = ipAddress;
 	}
 	
-	JButton sendDataBtn;
-	Board brd;
 	
 	ActionListener aListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() == sendDataBtn) {
 				try {
-					//st.sendCoordinate();
+					String question = JOptionPane.showInputDialog(null, "Write your question", "You raised your hand", JOptionPane.QUESTION_MESSAGE);
+					st.sendPacket(question , 9);
 				}catch (Exception x) {
 					System.out.println("student.sendCoordinate() in button listener errror!");
 				}
@@ -60,14 +65,14 @@ public class Student {
 		content.add(brd, BorderLayout.CENTER);
 		
 		JPanel control = new JPanel();
-		sendDataBtn = new JButton ("Eraser");
+		sendDataBtn = new JButton ("Raise Hand");
 		sendDataBtn.addActionListener(aListener);
 				
 		control.add(sendDataBtn);
 		
 		
 		content.add(control, BorderLayout.NORTH);
-		jf.setSize(800,600);
+		jf.setSize(1000,800);
 		
 		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 		jf.setLocation(d.width/2 - jf.getSize().width/2, d.height/2 - jf.getSize().height/2);
@@ -91,13 +96,13 @@ public class Student {
 		inStream = new ObjectInputStream(studentSocket.getInputStream());
 	}
 	
-	public Coordinate recvPacket() throws Exception {
-		Coordinate recvPacket;
-		recvPacket = new Coordinate();
+	public Packet recvPacket() throws Exception {
+		Packet recvPacket;
+		recvPacket = new Packet();
 		
 		do {
 			try {
-				recvPacket = (Coordinate) inStream.readObject();
+				recvPacket = (Packet) inStream.readObject();
 				if(recvPacket.opCode == 1) { //drawing - erasing mode
 					System.out.println("Drawing line");
 					brd.setColor(recvPacket.color);
@@ -124,7 +129,10 @@ public class Student {
 					brd.repaint();
 				}else if(recvPacket.opCode == 6) {
 					brd.clearAll();
+				}else if(recvPacket.opCode == 9) {
+					JOptionPane.showMessageDialog(null, "Teacher answered: " + recvPacket.msg);
 				}
+				
 			}
 			catch (Exception e) {
 				System.out.println("recvPacket() error");
@@ -162,15 +170,15 @@ public class Student {
 		}
 	}
 	
-	/*public void sendCoordinate() throws Exception {
+	public void sendPacket(String s, int opCode) throws Exception {
 		try {
-			//Coordinate c = new Coordinate(3,4,17,15,2);
+			Packet c = new Packet(s, opCode);
 			outStream.writeObject(c);
 			outStream.flush();
 			System.out.println("C is sent!");
 		} catch(Exception e) {
-			System.out.println("student.sendCoordinate() error!");
+			System.out.println("student.sendPacket() error!");
 		}
-	}*/
+	}
 		
 }

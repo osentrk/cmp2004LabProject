@@ -15,14 +15,24 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.border.Border;
 import javax.swing.JColorChooser;
 import java.io.*;
 import java.net.*;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import javax.swing.JComponent;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class Teacher extends JComponent {
@@ -32,11 +42,8 @@ public class Teacher extends JComponent {
 	
 	public Graphics2D graph;
 	public Image img;
-	
 	public int curX, curY, prevX, prevY; //store mouse position
-	
 	public int operationCode;
-	
 	private int curStroke;
 	
 	
@@ -45,12 +52,63 @@ public class Teacher extends JComponent {
 	private Socket teacherSocket;
 	ObjectOutputStream outStream;
 	ObjectInputStream inStream;
+
+	JButton deleteBtn, drawBtn, rectangleBtn, circleBtn, colorBtn,clearBtn, startLessonBtn;
+	private static Teacher tc;
+		
+	int counter = 2400000;
+	int hour, minute, second;
+	
+	int numberOfRectangle;
+	int numberOfCircle;
+	
+	public static void main(String[] args) throws Exception, IOException{
+		tc = new Teacher();
+		tc.showBoard();
+		tc.runServer();
+	}
+	
+	public Teacher() {
+		setDoubleBuffered(false);
+		numberOfRectangle = 0;
+		numberOfCircle = 0;
+		addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) { // get mouse position(x,y) when mouse pressed
+				prevX = e.getX();
+				prevY = e.getY();
+				System.out.println("Coordinate when mouse clicked X: " + prevX + " Y: " + prevY);
+			}		
+		});
+		
+		
+		addMouseMotionListener(new MouseMotionAdapter() {
+			public void mouseDragged(MouseEvent e) {
+				curX = e.getX();
+				curY = e.getY();
+				if(graph != null) {
+					graph.drawLine(prevX, prevY, curX, curY);
+					try {
+						tc.sendPacket(prevX, prevY, curX, curY, operationCode, tc.getColor(),tc.getThickness());
+						System.out.println(operationCode);
+					}catch (Exception x) {
+						x.printStackTrace();
+					}
+					repaint();
+					prevX = curX; 
+					prevY = curY;	
+				}
+				System.out.println("X: " + curX + " Y: " + curY);
+			}
+		});
+	}
 	
 		
 	public void waitConnection() throws Exception {
 		System.out.println("Waiting connection");
 		teacherSocket = serverSocket.accept();
 		System.out.println("Student joined.");
+		startLessonBtn.setEnabled(true);
+		JOptionPane.showMessageDialog(null, "Student joined. You can use Start Lesson button to start timer." );
 	}
 	
 	public void createStream() throws Exception{
@@ -60,14 +118,18 @@ public class Teacher extends JComponent {
 		inStream = new ObjectInputStream(teacherSocket.getInputStream());
 	}
 	
-	public Coordinate recvPacket() throws Exception {
-		Coordinate recvPacket;
-		recvPacket = new Coordinate();
+	public Packet recvPacket() throws Exception {
+		Packet recvPacket;
+		recvPacket = new Packet();
 		
 		do {
 			try {
-				recvPacket = (Coordinate) inStream.readObject();
-				System.out.println(recvPacket.opCode);
+				recvPacket = (Packet) inStream.readObject();
+				if(recvPacket.opCode == 9) {
+					JOptionPane.showMessageDialog(null, "Student asked: " + recvPacket.msg);
+					String answer = JOptionPane.showInputDialog(null, recvPacket.msg, "Write the answer", JOptionPane.INFORMATION_MESSAGE);
+					tc.sendPacket(answer, 9);
+				}
 			}
 			catch (Exception e) {
 				System.out.println("recvPacket() error"); //TODO: kontrol, sonsuz d�ng�ye giriyor
@@ -111,50 +173,7 @@ public class Teacher extends JComponent {
 			e.printStackTrace();
 		}
 	}
-	
-	JButton deleteBtn, drawBtn, rectangleBtn, circleBtn, colorBtn,clearBtn;
-	
-	private static Teacher tc;
-	
-	public static void main(String[] args) throws Exception, IOException{
-		tc = new Teacher();
-		tc.showBoard();
-		tc.runServer();
-	}
-	
-	public Teacher() {
-		setDoubleBuffered(false);
 		
-		addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) { // get mouse position(x,y) when mouse pressed
-				prevX = e.getX();
-				prevY = e.getY();
-				System.out.println("Coordinate when mouse clicked X: " + prevX + " Y: " + prevY);
-			}		
-		});
-		
-		
-		addMouseMotionListener(new MouseMotionAdapter() {
-			public void mouseDragged(MouseEvent e) {
-				curX = e.getX();
-				curY = e.getY();
-				if(graph != null) {
-					graph.drawLine(prevX, prevY, curX, curY);
-					try {
-						tc.sendCoordinate(prevX, prevY, curX, curY, operationCode, tc.getColor(),tc.getThickness());
-						System.out.println(operationCode);
-					}catch (Exception x) {
-						x.printStackTrace();
-					}
-					repaint();
-					prevX = curX; 
-					prevY = curY;	
-				}
-				System.out.println("X: " + curX + " Y: " + curY);
-			}
-		});
-	}
-	
 	protected void paintComponent (Graphics grp) {
 		if(img == null) {
 			img = createImage(getSize().width,getSize().height);
@@ -177,11 +196,15 @@ public class Teacher extends JComponent {
 		graph.fillRect(0,0,getSize().width, getSize().height);
 		graph.setPaint(curColor);
 		try {
-			tc.sendCoordinate(prevX, prevY, curX, curY, 6, tc.getColor(),tc.getThickness());
+			tc.sendPacket(prevX, prevY, curX, curY, 6, tc.getColor(),tc.getThickness());
 		}catch (Exception x) {
 			x.printStackTrace();
 		}
 		repaint();
+		rectangleBtn.setText("Draw a Rectangle");
+		circleBtn.setText("Draw a Circle");
+		numberOfRectangle = 0;
+		numberOfCircle = 0;
 		System.out.println("Board.clearAll() function is called.");
 	}
 	
@@ -195,10 +218,12 @@ public class Teacher extends JComponent {
 		this.setColor(curColor);
 		graph.drawRect(prevX, prevY, 80, 80);
 		try {
-			tc.sendCoordinate(prevX, prevY, curX, curY, 3, tc.getColor(),tc.getThickness());
+			tc.sendPacket(prevX, prevY, curX, curY, 3, tc.getColor(),tc.getThickness());
 		}catch (Exception x) {
 			x.printStackTrace();
 		}
+		numberOfRectangle++;
+		rectangleBtn.setText("Draw a Rectangle ("+numberOfRectangle+")");
 		repaint();
 	}
 	
@@ -206,19 +231,15 @@ public class Teacher extends JComponent {
 		this.setColor(curColor);
 		graph.drawOval(prevX, prevY, 80, 80);
 		try {
-			tc.sendCoordinate(prevX, prevY, curX, curY, 4, tc.getColor(),tc.getThickness());
+			tc.sendPacket(prevX, prevY, curX, curY, 4, tc.getColor(),tc.getThickness());
 		}catch (Exception x) {
 			x.printStackTrace();
 		}
+		numberOfCircle++;
+		circleBtn.setText("Draw a Circle ("+numberOfCircle+")");
 		repaint();
 	}
-	
-	public void setColor(Color c) {
-		graph.setPaint(c);
-		curColor = c;
-		System.out.println("Graph color set to: " + c);
-	}
-	
+		
 	public void setThickness(int stroke) {
 		graph.setStroke(new BasicStroke(stroke));
 		curStroke = stroke;
@@ -228,16 +249,22 @@ public class Teacher extends JComponent {
 	public int getThickness() {
 		return curStroke;
 	}
-
+	
 	ActionListener aListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() == deleteBtn) {
 				tc.clear();
 			}else if(e.getSource() == drawBtn) {
+				if(tc.getColor() == null) {
+					tc.setColor();
+				}
 				tc.setThickness(1);
 				tc.draw();
 			}else if(e.getSource() == rectangleBtn) {
 				try {
+					if(tc.getColor() == null) {
+						tc.setColor();
+					}
 					tc.rectangle();
 				}
 				catch (Exception xxx) {
@@ -245,17 +272,38 @@ public class Teacher extends JComponent {
 				}
 				
 			}else if(e.getSource() == circleBtn) {
+				if(tc.getColor() == null) {
+					tc.setColor();
+				}
 				tc.circle();
 			}else if(e.getSource() == colorBtn) {
-				curColor = JColorChooser.showDialog(null, "Choose a color", Color.BLACK);
-				tc.setColor(curColor);
+				tc.setColor();
 			}else if(e.getSource() == clearBtn) {
 				tc.clearAll();
 				System.out.println(tc.getThickness());
+			}else if(e.getSource() == startLessonBtn) {
+				Timer t = new Timer();
+				startLessonBtn.setForeground(Color.red);
+				counter = 300;
+				TimerTask tTask = new TimerTask() {
+					public void run() {
+						
+						hour = ((counter / 60) / 60);
+						minute = (counter/60) % 60;
+						second = counter % 60;
+						
+						startLessonBtn.setText(hour + ":" + minute + ":" + second);
+						counter--;
+						if(counter == -1) {
+							t.cancel();
+							JOptionPane.showMessageDialog(null, "Time is over. Go home yankee");
+						}
+					}					
+				};
+				t.scheduleAtFixedRate(tTask, 1000, 1000);
 			}
 		}
 	};
-	
 	
 	
 	public void showBoard() {	
@@ -278,6 +326,8 @@ public class Teacher extends JComponent {
 		colorBtn.addActionListener(aListener);
 		clearBtn = new JButton ("Clear All");
 		clearBtn.addActionListener(aListener);
+		startLessonBtn = new JButton ("Start Lesson");
+		startLessonBtn.addActionListener(aListener);
 		
 		
 		control.add(drawBtn);
@@ -286,29 +336,60 @@ public class Teacher extends JComponent {
 		control.add(circleBtn);
 		control.add(colorBtn);
 		control.add(clearBtn);
+		control.add(startLessonBtn);
+		
+		startLessonBtn.setEnabled(false);
 		
 		content.add(control, BorderLayout.NORTH);
-		jf.setSize(800,600);
+		jf.setSize(1000,800);
 		
 		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 		jf.setLocation(d.width/2 - jf.getSize().width/2, d.height/2 - jf.getSize().height/2);
-		
+				
 		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jf.setVisible(true);
+	}
+	
+	public void setColor() {
+		curColor = JColorChooser.showDialog(null, "Choose a color", Color.BLACK);
+		if(curColor != null) {
+			tc.setColor(curColor);
+		}else {
+			JOptionPane.showMessageDialog(null, "You didn't select any color. Your color is set to black.");
+			tc.setColor(Color.black);
+		}
+	}
+	
+	public void setColor(Color c) {
+		graph.setPaint(c);
+		curColor = c;
+		System.out.println("Graph color set to: " + c);
 	}
 	
 	public Color getColor() {
 		return curColor;
 	}
 	
-	public void sendCoordinate(int prevX, int prevY, int curX, int curY, int opCode, Color color, int stroke) throws Exception {
+	public void sendPacket(int prevX, int prevY, int curX, int curY, int opCode, Color color, int stroke) throws Exception {
 		try {
-			Coordinate c = new Coordinate(prevX, prevY, curX, curY, opCode, color, stroke);
+			Packet c = new Packet(prevX, prevY, curX, curY, opCode, color, stroke);
 			outStream.writeObject(c);
 			outStream.flush();
 			System.out.println("C is sent!");
 		} catch(Exception e) {
-			System.out.println("Teacher.sendCoordinate() error!"+e);
+			System.out.println("Teacher.sendPacket() error!"+e);
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendPacket(String s, int opCode) throws Exception {
+		try {
+			Packet c = new Packet(s, opCode);
+			outStream.writeObject(c);
+			outStream.flush();
+			System.out.println("C is sent!");
+		} catch(Exception e) {
+			System.out.println("Teacher.sendPacket() error!"+e);
 			e.printStackTrace();
 		}
 	}
