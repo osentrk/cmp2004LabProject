@@ -53,7 +53,7 @@ public class Teacher extends JComponent {
 	ObjectOutputStream outStream;
 	ObjectInputStream inStream;
 
-	JButton deleteBtn, drawBtn, rectangleBtn, circleBtn, colorBtn,clearBtn, startLessonBtn;
+	JButton deleteBtn, drawBtn, rectangleBtn, circleBtn, colorBtn,clearBtn, startLessonBtn, shoutBtn, attendanceBtn;
 	private static Teacher tc;
 		
 	int counter = 2400000;
@@ -61,6 +61,9 @@ public class Teacher extends JComponent {
 	
 	int numberOfRectangle;
 	int numberOfCircle;
+	
+	String studentName;
+	int studentNumber;
 	
 	public static void main(String[] args) throws Exception, IOException{
 		tc = new Teacher();
@@ -129,10 +132,14 @@ public class Teacher extends JComponent {
 					JOptionPane.showMessageDialog(null, "Student asked: " + recvPacket.msg);
 					String answer = JOptionPane.showInputDialog(null, recvPacket.msg, "Write the answer", JOptionPane.INFORMATION_MESSAGE);
 					tc.sendPacket(answer, 9);
+				}else if(recvPacket.opCode == 10) {
+					studentName = recvPacket.name;
+					studentNumber = recvPacket.stu;
 				}
+				
 			}
 			catch (Exception e) {
-				System.out.println("recvPacket() error"); //TODO: kontrol, sonsuz dï¿½ngï¿½ye giriyor
+				System.out.println("recvPacket() error");
 			}
 		}while(recvPacket.opCode != -2);
 		
@@ -163,6 +170,7 @@ public class Teacher extends JComponent {
 				}
 				catch (EOFException e) {
 					System.out.println("Server Terminated Conn");
+					JOptionPane.showMessageDialog(null, "Öðrenci kaçtý");
 				}
 				finally {
 					stopServer();
@@ -184,7 +192,7 @@ public class Teacher extends JComponent {
 		grp.drawImage(img, 0, 0, null);
 	}
 	
-	public void clear() {
+	public void clear() { //eraser
 		this.setThickness(10);
 		graph.setPaint(Color.white);
 		operationCode = 2;
@@ -208,7 +216,7 @@ public class Teacher extends JComponent {
 		System.out.println("Board.clearAll() function is called.");
 	}
 	
-	public void draw() {
+	public void draw() { 
 		this.setColor(curColor);
 		operationCode = 1;
 		System.out.println("Board.draw() function is called.");
@@ -296,11 +304,24 @@ public class Teacher extends JComponent {
 						counter--;
 						if(counter == -1) {
 							t.cancel();
-							JOptionPane.showMessageDialog(null, "Time is over. Go home yankee");
+							JOptionPane.showMessageDialog(null, "Time is over.");
 						}
 					}					
 				};
 				t.scheduleAtFixedRate(tTask, 1000, 1000);
+			}else if(e.getSource() == shoutBtn) {
+				String shout = JOptionPane.showInputDialog(null, "Send message to all students", "Shout", JOptionPane.INFORMATION_MESSAGE);
+				
+				try {
+					tc.sendPacket(shout, 11);
+				}
+				catch (Exception ex) {
+					System.out.println("Can not shout");
+				}
+			}else if(e.getSource() == attendanceBtn) {
+				String msg = studentName + " (" + studentNumber + ")";
+				JOptionPane.showMessageDialog(null, msg);
+				saveAttendance();
 			}
 		}
 	};
@@ -328,7 +349,10 @@ public class Teacher extends JComponent {
 		clearBtn.addActionListener(aListener);
 		startLessonBtn = new JButton ("Start Lesson");
 		startLessonBtn.addActionListener(aListener);
-		
+		shoutBtn = new JButton ("Shout");
+		shoutBtn.addActionListener(aListener);
+		attendanceBtn = new JButton ("Get Attendance");
+		attendanceBtn.addActionListener(aListener);
 		
 		control.add(drawBtn);
 		control.add(deleteBtn);
@@ -336,6 +360,10 @@ public class Teacher extends JComponent {
 		control.add(circleBtn);
 		control.add(colorBtn);
 		control.add(clearBtn);
+		control.add(startLessonBtn);
+		control.add(clearBtn);
+		control.add(shoutBtn);
+		control.add(attendanceBtn);
 		control.add(startLessonBtn);
 		
 		startLessonBtn.setEnabled(false);
@@ -392,6 +420,29 @@ public class Teacher extends JComponent {
 			System.out.println("Teacher.sendPacket() error!"+e);
 			e.printStackTrace();
 		}
+	}
+	
+	public void saveAttendance() {
+		Date date = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH.mm.ss");
+		System.out.println(formatter.format(date));
+		try {
+	      File myObj = new File(formatter.format(date) + "_attendance.txt");
+	      if (myObj.createNewFile()) {
+	        System.out.println("File created: " + myObj.getName());
+	      } else {
+	        System.out.println("File already exists.");
+	      }
+	      
+	      FileWriter myWriter = new FileWriter(myObj);
+	      myWriter.write("Student Name: " + studentName + " Student Number: " + studentNumber);
+	      myWriter.close();
+	      JOptionPane.showMessageDialog(null, "Attendance saved => attendance.txt");
+	      
+	    } catch (IOException e) {
+	      System.out.println("An error occurred.");
+	      e.printStackTrace();
+	    }
 	}
 	
 }

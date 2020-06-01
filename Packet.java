@@ -12,8 +12,10 @@ public class Packet implements Serializable {
 	public Color color;
 	public int stroke;
 	public String msg;
+	public String name;
+	public int stu;
 	
-	public Packet(int prevX, int prevY, int curX, int curY, int opCode, Color color, int stroke) {
+	public Packet(int prevX, int prevY, int curX, int curY, int opCode, Color color, int stroke) { //drawing - erasing
 		this.prevX = prevX;
 		this.prevY = prevY;
 		this.curX = curX;
@@ -23,7 +25,7 @@ public class Packet implements Serializable {
 		this.stroke = stroke;
 	}
 	
-	public Packet(int prevX, int prevY, int curX, int curY, int opCode, Color color) {
+	public Packet(int prevX, int prevY, int curX, int curY, int opCode, Color color) { //circle - rectangle
 		this.prevX = prevX;
 		this.prevY = prevY;
 		this.curX = curX;
@@ -32,12 +34,18 @@ public class Packet implements Serializable {
 		this.color = color;
 	}
 	
-	public Packet (String message, int opCode) {
+	public Packet (String message, int opCode) { //send message
 		this.msg = message;
 		this.opCode = opCode;
 	}
 	
-	public Packet() {
+	public Packet (int stu, String name, int opCode) { //login
+		this.name = name;
+		this.stu = stu;
+		this.opCode = opCode;
+	}
+	
+	public Packet() { //default
 		this.prevX = -1;
 		this.prevY = -1;
 		this.curX = -1;

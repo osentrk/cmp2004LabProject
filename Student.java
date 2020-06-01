@@ -15,6 +15,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 public class Student {
 	
@@ -28,12 +29,32 @@ public class Student {
 	Board brd;
 	private static Student st;
 	
+	String studentName;
+	int studentNumber;
+	
 	public static void main(String[] args) throws Exception, IOException, ClassNotFoundException {
 		System.out.println("Student side");
-		
 		st = new Student("127.0.0.1");
+		st.login();
+			
+	}
+	
+	public void login() throws Exception, IOException, ClassNotFoundException {
+		JTextField f1 = new JTextField();
+		JTextField f2 = new JTextField();
+		
+		Object[] fields = {
+				"Student Number" , f1,
+				"Name - Surname" , f2
+		};
+		JOptionPane.showConfirmDialog(null, fields, "Join Class", JOptionPane.DEFAULT_OPTION);
+		System.out.println(f1.getText());
+		int i = Integer.parseInt(f1.getText());
+		studentNumber = i;
+		studentName = f2.getText();
+		
 		st.showBoard();
-		st.runStudent();		
+		st.runStudent();	
 	}
 	
 		
@@ -60,14 +81,14 @@ public class Student {
 		Container content = jf.getContentPane();
 		
 		content.setLayout(new BorderLayout());
-		//content.setBackground(Color.white);
 		brd = new Board(); 
 		content.add(brd, BorderLayout.CENTER);
 		
 		JPanel control = new JPanel();
+						
 		sendDataBtn = new JButton ("Raise Hand");
 		sendDataBtn.addActionListener(aListener);
-				
+		
 		control.add(sendDataBtn);
 		
 		
@@ -94,6 +115,8 @@ public class Student {
 	public void createStream() throws Exception{
 		outStream = new ObjectOutputStream(studentSocket.getOutputStream());
 		inStream = new ObjectInputStream(studentSocket.getInputStream());
+		
+		st.sendPacket(studentNumber, studentName, 10); //login operation
 	}
 	
 	public Packet recvPacket() throws Exception {
@@ -112,7 +135,6 @@ public class Student {
 				} else if(recvPacket.opCode == 2) {
 					System.out.println("Erasing line");
 					brd.graph.setPaint(Color.white);
-					//brd.setColor(recvPacket.color);
 					brd.setThickness(new BasicStroke(recvPacket.stroke));
 					brd.graph.drawLine(recvPacket.prevX, recvPacket.prevY, recvPacket.curX, recvPacket.curY);
 					brd.repaint();
@@ -132,7 +154,9 @@ public class Student {
 				}else if(recvPacket.opCode == 9) {
 					JOptionPane.showMessageDialog(null, "Teacher answered: " + recvPacket.msg);
 				}
-				
+				else if(recvPacket.opCode == 11) {
+					JOptionPane.showMessageDialog(null, "Teacher shouted: " + recvPacket.msg);
+				}
 			}
 			catch (Exception e) {
 				System.out.println("recvPacket() error");
@@ -159,6 +183,7 @@ public class Student {
 			connectTeacher();
 			createStream();
 			System.out.println(recvPacket());
+				
 		}catch (EOFException e) {
 			System.out.println("\nClient Terminated Conn\n");
 		}
@@ -169,10 +194,21 @@ public class Student {
 			stopServer();
 		}
 	}
-	
+		
 	public void sendPacket(String s, int opCode) throws Exception {
 		try {
 			Packet c = new Packet(s, opCode);
+			outStream.writeObject(c);
+			outStream.flush();
+			System.out.println("C is sent!");
+		} catch(Exception e) {
+			System.out.println("student.sendPacket() error!");
+		}
+	}
+	
+	public void sendPacket(int i, String s, int opCode) throws Exception {
+		try {
+			Packet c = new Packet(i, s, opCode);
 			outStream.writeObject(c);
 			outStream.flush();
 			System.out.println("C is sent!");
